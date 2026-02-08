@@ -5,7 +5,7 @@ export const SAMPLE_USER = {
   avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
 };
 
-// NOTE: We use HTTPS links here. HTTP links will fail in modern browsers.
+// We are using HTTPS links here. HTTP links will fail in modern browsers.
 export const SAMPLE_VIDEOS = [
   {
     id: "v1",

@@ -12,9 +12,7 @@ const GoogleLogin = ({ onLogin, onCancel }) => {
       setStep(2);
     } else if (step === 2) {
       try {
-        // CALL BACKEND LOGIN
-        // Note: For this capstone, we are treating login/register as one flow for simplicity
-        // In a real app, you'd have separate register/login endpoints
+
         const res = await fetch('http://localhost:5000/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -24,7 +22,7 @@ const GoogleLogin = ({ onLogin, onCancel }) => {
         const data = await res.json();
         
         if (res.ok) {
-            onLogin(data); // Pass user data back to App
+            onLogin(data); 
         } else {
             setError(data.message || "Login failed");
         }

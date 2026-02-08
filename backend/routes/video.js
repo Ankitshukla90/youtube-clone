@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.get('/', getAllVideos);
 router.get('/find/:id', getVideoById);
-router.get('/user/:userId', getVideosByUserId); // <--- NEW ROUTE
+router.get('/user/:userId', getVideosByUserId); // NEW ROUTE
 router.post('/', addVideo);
 router.put('/:id', updateVideo);
 router.put('/like/:id', likeVideo);
