@@ -4,21 +4,26 @@ import jwt from 'jsonwebtoken';
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    // ACCEPT USERNAME from body
+    const { email, password, username } = req.body;
+    
     let user = await User.findOne({ email });
     
-    // Auto-Register if user not found
+    // IF USER NOT FOUND -> REGISTER (Create New)
     if (!user) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
+        
         const newUser = new User({
-            username: email.split('@')[0], 
+            // Use provided username OR fallback to email prefix
+            username: username || email.split('@')[0], 
             email: email,
             password: hashedPassword,
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || email}`
         });
         user = await newUser.save();
     } else {
+        // IF USER EXISTS -> LOGIN (Verify Password)
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
     }
@@ -26,6 +31,7 @@ export const login = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret');
     const { password: _, ...userInfo } = user._doc;
     res.status(200).json({ token, ...userInfo });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

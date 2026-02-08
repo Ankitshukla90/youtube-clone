@@ -16,7 +16,10 @@ function App() {
   const [videos, setVideos] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/videos').then(res => res.json()).then(data => setVideos(data)).catch(err => console.error(err));
+    fetch('http://localhost:5000/api/videos')
+      .then(res => res.json())
+      .then(data => setVideos(data))
+      .catch(err => console.error(err));
   }, [view]);
 
   const filteredVideos = videos.filter(v => {
@@ -25,18 +28,52 @@ function App() {
     return matchesCategory && matchesSearch;
   });
 
-  const handleLogin = (user) => { setCurrentUser(user); setView("home"); };
-  const handleNavClick = (page) => { if (page === "channel" && !currentUser) { setView("login"); return; } setView(page); setActiveVideo(null); };
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    setView("home");
+  };
 
-  if (view === "login") { return <Login onLogin={handleLogin} />; }
+  const handleNavClick = (page) => {
+    if (page === "channel" && !currentUser) { setView("login"); return; }
+    setView(page);
+    setActiveVideo(null);
+  };
+
+  // If view is Login, pass the cancel handler
+  if (view === "login") {
+      return <Login onLogin={handleLogin} onCancel={() => setView("home")} />;
+  }
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans">
-      <Navbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} currentUser={currentUser} onLoginClick={() => setView("login")} onLogout={() => { setCurrentUser(null); setView("home"); }} onLogoClick={() => { setView("home"); setActiveVideo(null); }} />
+      <Navbar 
+        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        currentUser={currentUser}
+        onLoginClick={() => setView("login")}
+        onLogout={() => { setCurrentUser(null); setView("home"); }}
+        onLogoClick={() => { setView("home"); setActiveVideo(null); }}
+      />
+      
       <div className={`pt-14 transition-all duration-200 ${view === "watch" ? "" : isSidebarOpen ? "md:pl-60" : "md:pl-[72px]"}`}>
-        {view === "home" && (<> <Sidebar isOpen={isSidebarOpen} onNavigate={handleNavClick} /> <Home videos={filteredVideos} onVideoClick={(v) => { setActiveVideo(v); setView("watch"); }} activeCategory={activeCategory} setActiveCategory={setActiveCategory}/> </>)}
-        {view === "watch" && activeVideo && (<VideoPlayer video={activeVideo} currentUser={currentUser} onVideoSelect={(v) => { setActiveVideo(v); window.scrollTo(0,0); }} relatedVideos={videos.filter(v => v._id !== activeVideo._id)} />)}
-        {view === "channel" && (<> <Sidebar isOpen={isSidebarOpen} onNavigate={handleNavClick} /> <Channel currentUser={currentUser} /> </>)}
+        {view === "home" && (
+          <>
+            <Sidebar isOpen={isSidebarOpen} onNavigate={handleNavClick} />
+            <Home videos={filteredVideos} onVideoClick={(v) => { setActiveVideo(v); setView("watch"); }} 
+                activeCategory={activeCategory} setActiveCategory={setActiveCategory}/>
+          </>
+        )}
+        {view === "watch" && activeVideo && (
+          <VideoPlayer video={activeVideo} currentUser={currentUser} onVideoSelect={(v) => { setActiveVideo(v); window.scrollTo(0,0); }}
+            relatedVideos={videos.filter(v => v._id !== activeVideo._id)} />
+        )}
+        {view === "channel" && (
+            <>
+                <Sidebar isOpen={isSidebarOpen} onNavigate={handleNavClick} />
+                <Channel currentUser={currentUser} />
+            </>
+        )}
       </div>
     </div>
   );
