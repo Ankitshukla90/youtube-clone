@@ -10,7 +10,7 @@ export const getAllVideos = async (req, res) => {
 export const getVideoById = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
-    video.views += 1; // Increment view count
+    video.views += 1;
     await video.save();
     res.status(200).json(video);
   } catch (err) { res.status(500).json(err); }
@@ -26,11 +26,7 @@ export const addVideo = async (req, res) => {
 
 export const updateVideo = async (req, res) => {
   try {
-    const updatedVideo = await Video.findByIdAndUpdate(
-        req.params.id, 
-        { $set: req.body }, 
-        { new: true }
-    );
+    const updatedVideo = await Video.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
     res.status(200).json(updatedVideo);
   } catch (err) { res.status(500).json(err); }
 };

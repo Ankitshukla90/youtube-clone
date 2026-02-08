@@ -24,11 +24,7 @@ export const deleteComment = async (req, res) => {
 
 export const updateComment = async (req, res) => {
   try {
-    const updatedComment = await Comment.findByIdAndUpdate(
-        req.params.id,
-        { $set: { text: req.body.text } },
-        { new: true }
-    );
+    const updatedComment = await Comment.findByIdAndUpdate(req.params.id, { $set: { text: req.body.text } }, { new: true });
     res.status(200).json(updatedComment);
   } catch (err) { res.status(500).json(err); }
 };
