@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
@@ -7,75 +8,68 @@ import VideoPlayer from './pages/VideoPlayer';
 import Channel from './pages/Channel'; 
 
 function App() {
-  const [view, setView] = useState("home"); 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
   const [currentUser, setCurrentUser] = useState(null);
-  const [activeVideo, setActiveVideo] = useState(null);
-  const [videos, setVideos] = useState([]);
+  
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    fetch('http://localhost:5000/api/videos')
-      .then(res => res.json())
-      .then(data => setVideos(data))
-      .catch(err => console.error(err));
-  }, [view]);
-
-  const filteredVideos = videos.filter(v => {
-    const matchesCategory = activeCategory === "All" || v.category === activeCategory;
-    const matchesSearch = v.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  // Hide Sidebar on Login Page
+  const showSidebar = location.pathname !== '/login';
 
   const handleLogin = (user) => {
     setCurrentUser(user);
-    setView("home");
+    navigate('/');
   };
 
-  const handleNavClick = (page) => {
-    if (page === "channel" && !currentUser) { setView("login"); return; }
-    setView(page);
-    setActiveVideo(null);
+  const handleLogout = () => {
+    setCurrentUser(null);
+    navigate('/');
   };
-
-  // If view is Login, pass the cancel handler
-  if (view === "login") {
-      return <Login onLogin={handleLogin} onCancel={() => setView("home")} />;
-  }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans">
-      <Navbar 
-        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        currentUser={currentUser}
-        onLoginClick={() => setView("login")}
-        onLogout={() => { setCurrentUser(null); setView("home"); }}
-        onLogoClick={() => { setView("home"); setActiveVideo(null); }}
-      />
-      
-      <div className={`pt-14 transition-all duration-200 ${view === "watch" ? "" : isSidebarOpen ? "md:pl-60" : "md:pl-[72px]"}`}>
-        {view === "home" && (
-          <>
-            <Sidebar isOpen={isSidebarOpen} onNavigate={handleNavClick} />
-            <Home videos={filteredVideos} onVideoClick={(v) => { setActiveVideo(v); setView("watch"); }} 
-                activeCategory={activeCategory} setActiveCategory={setActiveCategory}/>
-          </>
+    <div className="min-h-screen bg-[#f9f9f9] text-gray-900 font-sans">
+      {location.pathname !== '/login' && (
+        <Navbar 
+          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          currentUser={currentUser}
+          onLoginClick={() => navigate('/login')}
+          onLogout={handleLogout}
+          onLogoClick={() => navigate('/')}
+        />
+      )}
+
+      <div className="flex">
+        {showSidebar && (
+            <Sidebar 
+                isOpen={isSidebarOpen} 
+                onNavigate={(path) => {
+                    if (path === 'channel') {
+                        if(!currentUser) navigate('/login');
+                        else navigate(`/channel/${currentUser._id}`);
+                    } else if (path === 'home') {
+                        navigate('/');
+                    } else {
+                        navigate('/');
+                    }
+                }} 
+            />
         )}
-        {view === "watch" && activeVideo && (
-          <VideoPlayer video={activeVideo} currentUser={currentUser} onVideoSelect={(v) => { setActiveVideo(v); window.scrollTo(0,0); }}
-            relatedVideos={videos.filter(v => v._id !== activeVideo._id)} />
-        )}
-        {view === "channel" && (
-            <>
-                <Sidebar isOpen={isSidebarOpen} onNavigate={handleNavClick} />
-                <Channel currentUser={currentUser} />
-            </>
-        )}
+
+        <main className={`flex-1 ${showSidebar ? (isSidebarOpen ? 'md:ml-60' : 'md:ml-[72px]') : ''} pt-14 transition-all duration-200`}>
+          <Routes>
+            <Route path="/" element={<Home searchQuery={searchQuery} />} />
+            <Route path="/login" element={<Login onLogin={handleLogin} onCancel={() => navigate('/')} />} />
+            <Route path="/video/:id" element={<VideoPlayer currentUser={currentUser} />} />
+            <Route path="/channel/:userId" element={<Channel currentUser={currentUser} />} />
+          </Routes>
+        </main>
       </div>
     </div>
   );
 }
+
 export default App;

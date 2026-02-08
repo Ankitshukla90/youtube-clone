@@ -26,7 +26,11 @@ export const addVideo = async (req, res) => {
 
 export const updateVideo = async (req, res) => {
   try {
-    const updatedVideo = await Video.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+    const updatedVideo = await Video.findByIdAndUpdate(
+        req.params.id, 
+        { $set: req.body }, 
+        { new: true }
+    );
     res.status(200).json(updatedVideo);
   } catch (err) { res.status(500).json(err); }
 };
@@ -46,4 +50,12 @@ export const likeVideo = async (req, res) => {
         await video.save();
         res.status(200).json(video);
     } catch(err) { res.status(500).json(err); }
+};
+
+// NEW: Get Videos by Specific User (For Channel Page)
+export const getVideosByUserId = async (req, res) => {
+  try {
+    const videos = await Video.find({ user: req.params.userId }).sort({ createdAt: -1 });
+    res.status(200).json(videos);
+  } catch (err) { res.status(500).json(err); }
 };

@@ -4,18 +4,13 @@ import jwt from 'jsonwebtoken';
 
 export const login = async (req, res) => {
   try {
-    // ACCEPT USERNAME from body
     const { email, password, username } = req.body;
-    
     let user = await User.findOne({ email });
     
-    // IF USER NOT FOUND -> REGISTER (Create New)
     if (!user) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        
         const newUser = new User({
-            // Use provided username OR fallback to email prefix
             username: username || email.split('@')[0], 
             email: email,
             password: hashedPassword,
@@ -23,7 +18,6 @@ export const login = async (req, res) => {
         });
         user = await newUser.save();
     } else {
-        // IF USER EXISTS -> LOGIN (Verify Password)
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
     }
@@ -31,7 +25,30 @@ export const login = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret');
     const { password: _, ...userInfo } = user._doc;
     res.status(200).json({ token, ...userInfo });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
+// NEW: Update Channel Profile (Avatar, Banner, Name)
+export const updateProfile = async (req, res) => {
+  try {
+    const { userId, username, avatar, channelBanner } = req.body;
+    
+    const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { 
+            $set: { 
+                username, 
+                avatar, 
+                channelBanner 
+            } 
+        },
+        { new: true }
+    );
+    
+    const { password: _, ...userInfo } = updatedUser._doc;
+    res.status(200).json(userInfo);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
