@@ -30,26 +30,29 @@ export const login = async (req, res) => {
   }
 };
 
-// NEW: Update Channel Profile (Avatar, Banner, Name)
 export const updateProfile = async (req, res) => {
   try {
     const { userId, username, avatar, channelBanner } = req.body;
-    
     const updatedUser = await User.findByIdAndUpdate(
         userId,
-        { 
-            $set: { 
-                username, 
-                avatar, 
-                channelBanner 
-            } 
-        },
+        { $set: { username, avatar, channelBanner } },
         { new: true }
     );
-    
     const { password: _, ...userInfo } = updatedUser._doc;
     res.status(200).json(userInfo);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+// NEW: Get User by ID (Fixes the "Loading..." bug on empty channels)
+export const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const { password, ...others } = user._doc;
+    res.status(200).json(others);
+  } catch (err) {
+    res.status(500).json(err);
   }
 };
