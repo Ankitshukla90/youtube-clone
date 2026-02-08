@@ -18,39 +18,57 @@ function App() {
 
   const handleSidebarNavigate = (id) => {
     // 1. Handle Categories (Explore)
-    const categories = ["trending", "music", "gaming", "sports", "technology"];
+    const categories = ["trending", "music", "gaming", "sports", "technology", "education"];
     if (categories.includes(id)) {
-        // Map ID to Category Name (Capitalized)
+        // Capitalize first letter (e.g., "gaming" -> "Gaming")
         const catName = id.charAt(0).toUpperCase() + id.slice(1);
-        setActiveCategory(catName); // Set filter
-        navigate('/'); // Go Home
+        setActiveCategory(catName);
+        navigate('/');
         return;
     }
 
-    // 2. Handle Pages
+    // 2. Handle Specific Pages
     switch(id) {
         case 'home':
             setActiveCategory("All");
             navigate('/');
             break;
+        case 'shorts':
+            // Just reset to All for now (Simulated)
+            setActiveCategory("All");
+            navigate('/');
+            break;
         case 'channel':
+        case 'library':
             if(!currentUser) navigate('/login');
             else navigate(`/channel/${currentUser._id}`);
             break;
         case 'history':
         case 'liked':
+        case 'watch_later':
         case 'subs':
-            // For now, these redirect home but we could add dedicated pages later
-            alert("This feature is simulated. Redirecting to Home.");
-            navigate('/');
+            // Check auth, then redirect home nicely
+            if(!currentUser) navigate('/login');
+            else {
+                setActiveCategory("All"); 
+                navigate('/'); 
+            }
             break;
         default:
             navigate('/');
     }
+    
+    // Close sidebar on mobile after click
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
   const handleLogin = (user) => {
     setCurrentUser(user);
+    navigate('/');
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
     navigate('/');
   };
 
@@ -65,7 +83,7 @@ function App() {
           setSearchQuery={setSearchQuery}
           currentUser={currentUser}
           onLoginClick={() => navigate('/login')}
-          onLogout={() => { setCurrentUser(null); navigate('/'); }}
+          onLogout={handleLogout}
           onLogoClick={() => { setActiveCategory("All"); navigate('/'); }}
         />
       )}

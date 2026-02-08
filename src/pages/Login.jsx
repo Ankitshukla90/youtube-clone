@@ -161,6 +161,7 @@ const Login = ({ onLogin, onCancel }) => {
       
       {/* Footer Text */}
       <div className="fixed bottom-4 flex gap-6 text-xs text-gray-600">
+         <span className="font-semibold text-gray-800">Made by Ankit Shukla</span>
          <span>Help</span>
          <span>Privacy</span>
          <span>Terms</span>
