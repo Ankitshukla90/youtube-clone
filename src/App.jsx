@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar';
 import GoogleLogin from './components/GoogleLogin';
 import Home from './pages/Home';
 import VideoPlayer from './pages/VideoPlayer';
-import { SAMPLE_VIDEOS, SAMPLE_COMMENTS } from './data/mockData';
+import Channel from './pages/Channel'; 
 
 function App() {
   const [view, setView] = useState("home"); 
@@ -14,24 +14,34 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [activeVideo, setActiveVideo] = useState(null);
   
-  // Simulated Database State
-  const [videos, setVideos] = useState(SAMPLE_VIDEOS);
-  const [comments, setComments] = useState(SAMPLE_COMMENTS);
+  const [videos, setVideos] = useState([]);
 
-  // Filter Logic
   useEffect(() => {
-    let filtered = SAMPLE_VIDEOS;
-    if (activeCategory !== "All") {
-        filtered = filtered.filter(v => v.category === activeCategory);
-    }
-    if (searchQuery) {
-        filtered = filtered.filter(v => v.title.toLowerCase().includes(searchQuery.toLowerCase()));
-    }
-    setVideos(filtered);
-  }, [activeCategory, searchQuery]);
+    const fetchVideos = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/videos');
+        const data = await res.json();
+        setVideos(data);
+      } catch (err) {
+        console.error("Error fetching videos:", err);
+      }
+    };
+    fetchVideos();
+  }, [view]); 
+
+  const filteredVideos = videos.filter(v => {
+    const matchesCategory = activeCategory === "All" || v.category === activeCategory;
+    const matchesSearch = v.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const handleLogin = (user) => {
     setCurrentUser(user);
+    setView("home"); 
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
     setView("home");
   };
 
@@ -41,22 +51,35 @@ function App() {
     window.scrollTo(0, 0);
   };
 
-  // CRUD for Comments
-  const addComment = (videoId, text) => {
-    const newComm = {
-      id: "c" + Date.now(),
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userAvatar: currentUser.avatar,
-      text: text,
-      timestamp: "Just now",
-      videoId: videoId
-    };
-    setComments([newComm, ...comments]);
+  const handleNavClick = (page) => {
+    if (page === "channel" && !currentUser) {
+        setView("login");
+        return;
+    }
+    
+    // Simple routing logic
+    if (page === "home") {
+        setView("home");
+        setActiveVideo(null);
+    } else if (page === "channel") {
+        setView("channel");
+        setActiveVideo(null);
+    } else {
+        // For other placeholder sidebar items
+        alert(`${page} page not implemented in this prototype`);
+    }
+    
+    if (window.innerWidth < 768) {
+        setIsSidebarOpen(false);
+    }
   };
 
-  const deleteComment = (commentId) => {
-    setComments(comments.filter(c => c.id !== commentId));
+  // NEW: Handle Logo Click
+  const handleLogoClick = () => {
+      setView("home");
+      setActiveVideo(null);
+      setActiveCategory("All");
+      setSearchQuery("");
   };
 
   return (
@@ -67,7 +90,8 @@ function App() {
         setSearchQuery={setSearchQuery}
         currentUser={currentUser}
         onLoginClick={() => setView("login")}
-        onLogout={() => setCurrentUser(null)}
+        onLogout={handleLogout}
+        onLogoClick={handleLogoClick} // <--- Passed here
       />
 
       {view === "login" && <GoogleLogin onLogin={handleLogin} onCancel={() => setView("home")} />}
@@ -76,9 +100,9 @@ function App() {
         
         {view === "home" && (
           <>
-            <Sidebar isOpen={isSidebarOpen} />
+            <Sidebar isOpen={isSidebarOpen} onNavigate={handleNavClick} />
             <Home 
-                videos={videos} 
+                videos={filteredVideos} 
                 onVideoClick={handleVideoClick} 
                 activeCategory={activeCategory} 
                 setActiveCategory={setActiveCategory}
@@ -89,13 +113,17 @@ function App() {
         {view === "watch" && activeVideo && (
           <VideoPlayer 
             video={activeVideo} 
-            comments={comments}
             currentUser={currentUser}
-            onAddComment={addComment}
-            onDeleteComment={deleteComment}
-            relatedVideos={videos.filter(v => v.id !== activeVideo.id)}
             onVideoSelect={handleVideoClick}
+            relatedVideos={videos.filter(v => v._id !== activeVideo._id)}
           />
+        )}
+
+        {view === "channel" && (
+            <>
+                <Sidebar isOpen={isSidebarOpen} onNavigate={handleNavClick} />
+                <Channel currentUser={currentUser} />
+            </>
         )}
       </div>
     </div>

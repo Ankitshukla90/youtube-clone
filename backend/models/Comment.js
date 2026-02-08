@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const CommentSchema = new mongoose.Schema({
   videoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Video', required: true },
@@ -8,4 +8,4 @@ const CommentSchema = new mongoose.Schema({
   userAvatar: String
 }, { timestamps: true });
 
-module.exports = mongoose.model('Comment', CommentSchema);
+export default mongoose.model('Comment', CommentSchema);

@@ -1,10 +1,11 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  username: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }, // We will hash this
-  avatar: { type: String, default: "https://api.dicebear.com/7.x/avataaars/svg?seed=Default" }
+  password: { type: String, required: true },
+  avatar: { type: String, default: "https://api.dicebear.com/7.x/avataaars/svg?seed=Default" },
+  channels: [{ type: String }] 
 }, { timestamps: true });
 
-module.exports = mongoose.model('User', UserSchema);
+export default mongoose.model('User', UserSchema);

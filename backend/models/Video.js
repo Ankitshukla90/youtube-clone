@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const VideoSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   title: { type: String, required: true },
-  description: { type: String, required: true },
+  description: { type: String },
   thumbnailUrl: { type: String, required: true },
   videoUrl: { type: String, required: true },
   views: { type: Number, default: 0 },
@@ -14,4 +14,4 @@ const VideoSchema = new mongoose.Schema({
   channelAvatar: { type: String }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Video', VideoSchema);
+export default mongoose.model('Video', VideoSchema);

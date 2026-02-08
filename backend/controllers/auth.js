@@ -1,49 +1,35 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
-// REGISTER
-exports.register = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-    
-    // Check if user exists
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: "User already exists" });
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create user
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`
-    });
-
-    const savedUser = await newUser.save();
-    res.status(201).json(savedUser);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// LOGIN
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    
+    // Check if user exists
+    let user = await User.findOne({ email });
+    
+    // AUTO-REGISTER if not found (Fixes "User not found" error)
+    if (!user) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        
+        const newUser = new User({
+            username: email.split('@')[0], 
+            email: email,
+            password: hashedPassword,
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+        });
+        user = await newUser.save();
+    } else {
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    // Return user info and token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret');
     const { password: _, ...userInfo } = user._doc;
     res.status(200).json({ token, ...userInfo });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
